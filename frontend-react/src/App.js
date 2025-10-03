@@ -3,6 +3,7 @@ import Home from './pages/Home/home'
 import styled from 'styled-components';
 import { BrowserRouter ,Routes, Route } from 'react-router-dom';
 import CadastroCargo from './components/CargoForm';
+import CadastroFuncionario from './components/FuncionarioForm';
 
 const AppContainer = styled.div`
   width: 100vw;
@@ -18,6 +19,7 @@ function App() {
         <Header/>
         <Routes>
           <Route path='/' element={<Home/>}/>
+          <Route path='/cadastro-funcionario' element={<CadastroFuncionario/>}/>
           <Route path='/cadastro-cargo' element={<CadastroCargo/>}/>
         </Routes>
       </AppContainer>
