@@ -65,7 +65,7 @@ function HeaderOptions(){
             {optionsText.map((text)=>(
                 <Option key={text}>
                     <p>
-                        {text}
+                        <Link to="/relatorio-funcionarios" style={{ textDecoration: 'none', color: 'inherit' }}>{text}</Link>
                         {text === 'CADASTRO' && <FaChevronDown size={14}/>}
                     </p>
                     {text === 'CADASTRO' &&(
