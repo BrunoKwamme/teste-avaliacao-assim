@@ -1,6 +1,8 @@
-import React, {useState} from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import axios from 'axios'
+import axios from 'axios';
+import { IMaskInput } from 'react-imask';
+
 
 const FormContainer = styled.div`
     max-width: 400px;
@@ -71,58 +73,196 @@ const Button = styled.button`
     }
 `
 
-function CargoForm()
-{
-    const [nome, setNome] = useState('')
-    const [salario, setSalario] = useState('')
-    const [mensagem, setMensagem] = useState('')
+const MaskedInputStyled = styled(IMaskInput)`
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 0 4px 4px 0; 
+  border-left: none;
+  font-size: 16px;
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+  &:focus {
+    outline: none;
+    border-color: #007bff;
+  }
+  
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
 
-        try {
-            const response = await axios.post('http://localhost:8000/api/cargos', {
-                nome,
-                salario
-            });
-            console .log('Cargo cadastrado: ', response.data);
-            setMensagem('Cargo cadastrado com sucesso!');
-            setNome('');
-            setSalario('');
-        } catch (error) {
-            console.log('Erro ao cadastrar cargo: ', error);
-            setMensagem('Error ao cadastrar cargo. Verifique os dados.');
-        }
-    };
-    return (
-        <FormContainer>
-            <Title>Cadastro de Cargos</Title>
-            <Form onSubmit={handleSubmit}>
-                <Label htmlFor='nome'>Nome do Cargo</Label>
-                <Input
-                    type='text'
-                    id='nome'
-                    value={nome}
-                    onChange={(e) => setNome(e.target.value)}
-                    required
-                />
+  &[type=number] {
+    -moz-appearance: textfield;
+  }
+`;
 
-                <Label htmlFor="salario">Salário do Cargo</Label>
-                <InputGroup>
-                <CurrencyPrefix>R$</CurrencyPrefix>
-                <Input
-                    type="text"
-                    id="salario"
-                    value={salario}
-                    onChange={(e) => setSalario(e.target.value)}
-                    required
-                />
-                </InputGroup>
+function CargoForm() {
+  const [nome, setNome] = useState('');
+  const [salario, setSalario] = useState('');
+  const [mensagem, setMensagem] = useState('');
+  const [cargos, setCargos] = useState([]);
+  const [filtroNome, setFiltroNome] = useState('');
+  const [cargoSelecionadoId, setCargoSelecionadoId] = useState(null);
 
-                <Button type="submit">Cadastrar</Button>
-            </Form>
-        </FormContainer>
-    )
+  const handleSalarioChange = (unmaskedValue) => {
+    setSalario(unmaskedValue);
+  };
+
+  const buscarCargos = async () => {
+    try {
+      const response = await axios.get(`http://localhost:8000/api/cargos?nome=${filtroNome}`);
+      setCargos(response.data);
+    } catch (error) {
+      console.error('Erro ao buscar cargos:', error);
+    }
+  };
+
+  const handleSelecionarCargo = (cargo) => {
+    setCargoSelecionadoId(cargo.id);
+    setNome(cargo.nome);
+    setSalario(cargo.salario.toString().replace('.', ','));
+    setMensagem('');
+  };
+
+const handleCadastrar = async (e) => {
+  e.preventDefault();
+  const salarioDecimal = parseFloat(salario.replace(/\./g, '').replace(',', '.'));
+
+  try {
+    await axios.post('http://localhost:8000/api/cargos', {
+      nome,
+      salario: salarioDecimal,
+    });
+
+    setMensagem('Cargo cadastrado com sucesso!');
+    setNome('');
+    setSalario('');
+    setCargoSelecionadoId(null);
+    buscarCargos();
+  } catch (error) {
+    console.error('Erro ao cadastrar cargo:', error);
+    setMensagem('Erro ao cadastrar cargo.');
+  }
+};
+
+const handleAtualizar = async () => {
+  if (!cargoSelecionadoId) return;
+
+  const salarioDecimal = parseFloat(salario.replace(/\./g, '').replace(',', '.'));
+
+  try {
+    await axios.put(`http://localhost:8000/api/cargos/${cargoSelecionadoId}`, {
+      nome,
+      salario: salarioDecimal,
+    });
+
+    setMensagem('Cargo atualizado com sucesso!');
+    setNome('');
+    setSalario('');
+    setCargoSelecionadoId(null);
+    buscarCargos();
+  } catch (error) {
+    console.error('Erro ao atualizar cargo:', error);
+    setMensagem('Erro ao atualizar cargo.');
+  }
+};
+
+  const handleExcluir = async () => {
+    if (!cargoSelecionadoId) return;
+
+    try {
+      await axios.delete(`http://localhost:8000/api/cargos/${cargoSelecionadoId}`);
+      setMensagem('Cargo excluído com sucesso!');
+      setNome('');
+      setSalario('');
+      setCargoSelecionadoId(null);
+      buscarCargos();
+    } catch (error) {
+      console.error('Erro ao excluir cargo:', error);
+      setMensagem('Erro ao excluir cargo.');
+    }
+  };
+
+  return (
+    <FormContainer>
+      <Title>Cadastro de Cargos</Title>
+
+      <Form onSubmit={(e) => { e.preventDefault(); buscarCargos(); }}>
+        <Label>Pesquisar por Nome</Label>
+        <Input
+          type="text"
+          value={filtroNome}
+          onChange={(e) => setFiltroNome(e.target.value)}
+        />
+        <Button type="submit">Pesquisar</Button>
+      </Form>
+
+      {cargos.length > 0 && (
+        <table style={{ width: '100%', marginTop: '20px', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr>
+              <th style={{ border: '1px solid #ccc', padding: '8px' }}>Nome</th>
+              <th style={{ border: '1px solid #ccc', padding: '8px' }}>Salário</th>
+            </tr>
+          </thead>
+          <tbody>
+            {cargos.map((cargo) => (
+              <tr
+                key={cargo.id}
+                onClick={() => handleSelecionarCargo(cargo)}
+                style={{ cursor: 'pointer', backgroundColor: cargoSelecionadoId === cargo.id ? '#e0e0e0' : 'transparent' }}
+              >
+                <td style={{ border: '1px solid #ccc', padding: '8px' }}>{cargo.nome}</td>
+                <td style={{ border: '1px solid #ccc', padding: '8px' }}>R$ {parseFloat(cargo.salario).toFixed(2).replace('.', ',')}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      <Form onSubmit={handleCadastrar} style={{ marginTop: '30px' }}>
+        <Label htmlFor='nome'>Nome do Cargo</Label>
+        <Input
+          type='text'
+          id='nome'
+          value={nome}
+          onChange={(e) => setNome(e.target.value)}
+          required
+        />
+
+        <Label htmlFor="salario">Salário do Cargo</Label>
+        <InputGroup>
+          <CurrencyPrefix>R$</CurrencyPrefix>
+          <MaskedInputStyled
+            mask={Number}
+            thousandsSeparator='.'
+            radix=','
+            scale={2}
+            padFractionalZeros={true}
+            id="salario"
+            value={salario}
+            onAccept={(value) => handleSalarioChange(value)}
+            required
+          />
+        </InputGroup>
+
+        {mensagem && (
+          <p style={{ textAlign: 'center', color: mensagem.includes('sucesso') ? 'green' : 'red' }}>
+            {mensagem}
+          </p>
+        )}
+
+        <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+          <Button type="submit" disabled={cargoSelecionadoId !== null}>Cadastrar</Button>
+          <Button type="button" onClick={handleAtualizar} disabled={!cargoSelecionadoId}>Atualizar</Button>
+          <Button type="button" onClick={handleExcluir} disabled={!cargoSelecionadoId} style={{ backgroundColor: '#dc3545' }}>
+            Excluir
+          </Button>
+        </div>
+      </Form>
+    </FormContainer>
+  );
 }
 
-export default CargoForm
+export default CargoForm;

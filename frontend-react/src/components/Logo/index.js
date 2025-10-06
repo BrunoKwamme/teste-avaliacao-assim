@@ -14,7 +14,7 @@ const LogoImage = styled.img`
 function Logo() {
     return (
         <LogoContainer>
-            <Link>
+            <Link to={'/'}>
                 <LogoImage
                     src={logo}
                     alt='logo'

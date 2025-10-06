@@ -1,19 +1,20 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
+import { IMaskInput } from 'react-imask';
+import axios from 'axios';
 
-// Manter os estilos existentes
 const FormContainer = styled.div`
-  max-width: 400px;
-  margin: 20px auto; /* Reduzida a margem externa */
-  padding: 18px; /* Reduzido o padding interno */
+  max-width: 960px;
+  margin: 20px auto; 
+  padding: 20px; 
   background-color: #f9f9f9;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 `;
 
 const Title = styled.h2`
-  margin-bottom: 15px; /* Reduzida a margem inferior do título */
-  font-size: 18px; /* Ligeiramente menor */
+  margin-bottom: 15px; 
+  font-size: 18px; 
   text-align: center;
 `;
 
@@ -23,68 +24,62 @@ const Form = styled.form`
 `;
 
 const Label = styled.label`
-  margin-bottom: 6px; /* Reduzida a margem inferior do label */
+  margin-bottom: 6px; 
   font-weight: 500;
-  font-size: 14px; /* Ligeiramente menor */
+  font-size: 14px; 
 `;
 
 const Input = styled.input`
-  padding: 8px; /* Reduzido o padding interno */
-  margin-bottom: 8px; /* Reduzido ainda mais o espaçamento entre inputs */
+  padding: 8px;
+  margin-bottom: 8px; 
   border-radius: 4px;
   border: 1px solid #ccc;
-  font-size: 14px; /* Ligeiramente menor */
+  font-size: 14px; 
 `;
 
 const Button = styled.button`
-  padding: 10px; /* Reduzido o padding do botão */
+  padding: 10px; 
   background-color: #007bff;
   color: white;
   border: none;
   border-radius: 4px;
-  font-size: 15px; /* Ligeiramente menor */
+  font-size: 15px;
   cursor: pointer;
-  margin-top: 10px; /* Ajuste na margem superior */
+  margin-top: 10px; 
 
   &:hover {
     background-color: #0056b3;
   }
 `;
 
-// Novo componente para agrupar inputs na mesma linha
 const InlineGroup = styled.div`
   display: flex;
-  gap: 8px; /* Reduzido o espaçamento entre elementos inline */
-  margin-bottom: 8px; /* Reduzido o espaçamento */
+  gap: 8px; 
+  margin-bottom: 8px; 
 `;
 
-// Novo componente para inputs menores
 const InlineInput = styled(Input)`
   flex-grow: 1;
   margin-bottom: 0;
 `;
 
-// Componente para inputs menores com largura fixa
-const CEPInput = styled(InlineInput)`
-  flex-basis: 55%; /* Ajustado para dar mais espaço ao CEP */
-  max-width: 55%;
-`;
-
 const NumberInput = styled(InlineInput)`
-  flex-basis: 45%; /* Ajustado */
   max-width: 45%;
 `;
 
 const UFInput = styled(InlineInput)`
-  flex-basis: 25%;
-  max-width: 25%;
+  flex-basis: 20%;
+  max-width: 10%;
 `;
 
+const MaskedInput = styled(IMaskInput)`
+  ${Input.componentStyle.rules}
+`;
 
 function FuncionarioForm() {
   const [formData, setFormData] = useState({
     nome: '',
-    dataNascimento: '',
+    data_nascimento: '',
     cep: '',
     logradouro: '',
     numero: '',
@@ -95,23 +90,67 @@ function FuncionarioForm() {
     cpf: '',
     email: '',
     telefone: '',
-    cargo: ''
+    cargo_id: ''
   });
+
+  const [funcionarios, setFuncionarios] = useState([]);
+  const [cargos, setCargos] = useState([]);
+  const [mensagem, setMensagem] = useState('');
+  const [buscaNome, setBuscaNome] = useState('');
+  const [buscaCpf, setBuscaCpf] = useState('');
+  const [funcionarioSelecionadoId, setFuncionarioSelecionadoId] = useState(null);
+
+  useEffect(() => {
+    carregarCargos();
+  }, []);
+
+  const formatarDataParaBackend = (data) => {
+    if (!data) return null;
+    const partes = data.split('/');
+    if (partes.length !== 3) return null;
+    const [dia, mes, ano] = partes;
+    return `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+  };
+
+  const carregarCargos = async () => {
+    try {
+      const response = await axios.get('http://localhost:8000/api/cargos');
+      setCargos(response.data);
+    } catch (error) {
+      console.error('Erro ao carregar cargos:', error);
+    }
+  };
+
+  const buscarFuncionarios = async () => {
+    try {
+      const response = await axios.get(`http://localhost:8000/api/funcionarios`, {
+        params: {
+          nome: buscaNome,
+          cpf: buscaCpf
+        }
+      });
+      setFuncionarios(response.data);
+    } catch (error) {
+      console.error('Erro ao buscar funcionários:', error);
+    }
+  };
 
   const handleChange = (e) => {
     const { id, value } = e.target;
+    setFormData((prev) => ({ ...prev, [id]: value }));
+  };
+
+  const handleMaskedInputChange = (value, maskRef) => {
     setFormData((prev) => ({
       ...prev,
-      [id]: value
+      [maskRef.el.input.id]: value,
     }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log('Funcionário cadastrado:', formData);
+  const limparFormulario = () => {
     setFormData({
       nome: '',
-      dataNascimento: '',
+      data_nascimento: '',
       cep: '',
       logradouro: '',
       numero: '',
@@ -122,15 +161,128 @@ function FuncionarioForm() {
       cpf: '',
       email: '',
       telefone: '',
-      cargo: ''
+      cargo_id: ''
     });
+    setFuncionarioSelecionadoId(null);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      const payload = {
+        ...formData,
+        data_nascimento: formatarDataParaBackend(formData.dataNascimento),
+      };
+
+      await axios.post('http://localhost:8000/api/funcionarios', payload);
+      setMensagem('Funcionário cadastrado com sucesso!');
+      limparFormulario();
+      buscarFuncionarios();
+    } catch (error) {
+      console.error('Erro ao cadastrar funcionário:', error);
+      setMensagem('Erro ao cadastrar funcionário.');
+    }
+  };
+
+  const handleAtualizar = async () => {
+    if (!funcionarioSelecionadoId) return;
+
+    try {
+      const payload = {
+        ...formData,
+        data_nascimento: formatarDataParaBackend(formData.dataNascimento),
+      };
+
+      await axios.put(`http://localhost:8000/api/funcionarios/${funcionarioSelecionadoId}`, payload);
+      setMensagem('Funcionário atualizado com sucesso!');
+      limparFormulario();
+      buscarFuncionarios();
+    } catch (error) {
+      console.error('Erro ao atualizar funcionário:', error);
+      setMensagem('Erro ao atualizar funcionário.');
+    }
+  };
+
+  const handleExcluir = async () => {
+    if (!funcionarioSelecionadoId) return;
+
+    try {
+      await axios.delete(`http://localhost:8000/api/funcionarios/${funcionarioSelecionadoId}`);
+      setMensagem('Funcionário excluído com sucesso!');
+      limparFormulario();
+      buscarFuncionarios();
+    } catch (error) {
+      console.error('Erro ao excluir funcionário:', error);
+      setMensagem('Erro ao excluir funcionário.');
+    }
+  };
+
+  const selecionarFuncionario = (funcionario) => {
+    setFuncionarioSelecionadoId(funcionario.id);
+    setFormData({
+      ...funcionario,
+      cargo_id: funcionario.cargo?.id || '',
+      dataNascimento: funcionario.dataNascimento ? (() => {
+        const [ano, mes, dia] = funcionario.dataNascimento.split('-');
+        return `${dia}/${mes}/${ano}`;
+      })() : '',
+    });
+    setMensagem('');
   };
 
   return (
     <FormContainer>
       <Title>Cadastro de Funcionário</Title>
+
+      <Form onSubmit={(e) => { e.preventDefault(); buscarFuncionarios(); }}>
+        <InlineGroup>
+          <Input
+            type="text"
+            placeholder="Buscar por nome"
+            value={buscaNome}
+            onChange={(e) => setBuscaNome(e.target.value)}
+          />
+          <MaskedInput
+            mask="000.000.000-00"
+            placeholder="Buscar por CPF"
+            id="cpfBusca"
+            value={buscaCpf}
+            onAccept={(value) => setBuscaCpf(value)}
+          />
+        </InlineGroup>
+        <Button type="submit">Pesquisar</Button>
+      </Form>
+
+      {funcionarios.length > 0 && (
+        <table style={{ width: '100%', marginTop: '20px', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr>
+              <th style={{ border: '1px solid #ccc', padding: '8px' }}>Nome</th>
+              <th style={{ border: '1px solid #ccc', padding: '8px' }}>CPF</th>
+              <th style={{ border: '1px solid #ccc', padding: '8px' }}>Cargo</th>
+            </tr>
+          </thead>
+          <tbody>
+            {funcionarios.map((f) => (
+              <tr
+                key={f.id}
+                onClick={() => selecionarFuncionario(f)}
+                style={{
+                  cursor: 'pointer',
+                  backgroundColor: funcionarioSelecionadoId === f.id ? '#e0e0e0' : 'transparent'
+                }}
+              >
+                <td style={{ border: '1px solid #ccc', padding: '8px' }}>{f.nome}</td>
+                <td style={{ border: '1px solid #ccc', padding: '8px' }}>{f.cpf}</td>
+                <td style={{ border: '1px solid #ccc', padding: '8px' }}>{f.cargo?.nome || f.cargo}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
       <Form onSubmit={handleSubmit}>
-        {/* Dados Pessoais */}
         <Label htmlFor="nome">Nome</Label>
         <Input
           type="text"
@@ -140,88 +292,80 @@ function FuncionarioForm() {
           required
         />
 
-        <Label htmlFor="dataNascimento">Data de Nascimento</Label>
-        <Input
-          type="date"
+        <Label>Data de Nascimento</Label>
+        <MaskedInput
+          mask="00/00/0000"
           id="dataNascimento"
           value={formData.dataNascimento}
+          onAccept={handleMaskedInputChange}
+        />
+
+        <Label htmlFor="logradouro">Logradouro</Label>
+        <Input
+          type="text"
+          id="logradouro"
+          placeholder="Rua, Av."
+          value={formData.logradouro}
           onChange={handleChange}
         />
-        
-        {/* Endereço Detalhado */}
-        <Label htmlFor="cep">Endereço</Label>
+
         <InlineGroup>
-          <CEPInput
-            type="text"
-            id="cep"
-            placeholder="CEP"
-            value={formData.cep}
-            onChange={handleChange}
-            required
-          />
           <NumberInput
             type="text"
             id="numero"
             placeholder="Número"
             value={formData.numero}
             onChange={handleChange}
-            required
+          />
+          <InlineInput
+            type="text"
+            id="complemento"
+            placeholder="Complemento"
+            value={formData.complemento}
+            onChange={handleChange}
           />
         </InlineGroup>
 
-        <Input
-          type="text"
-          id="logradouro"
-          placeholder="Logradouro (Rua, Av.)"
-          value={formData.logradouro}
-          onChange={handleChange}
-          required
-        />
-
-        <Input
-          type="text"
-          id="complemento"
-          placeholder="Complemento (Apto, Bloco)"
-          value={formData.complemento}
-          onChange={handleChange}
-        />
-
-        <Input
-          type="text"
-          id="bairro"
-          placeholder="Bairro"
-          value={formData.bairro}
-          onChange={handleChange}
-          required
-        />
-
         <InlineGroup>
+          <InlineInput
+            type="text"
+            id="bairro"
+            placeholder="Bairro"
+            value={formData.bairro}
+            onChange={handleChange}
+          />
           <InlineInput
             type="text"
             id="cidade"
             placeholder="Cidade"
             value={formData.cidade}
             onChange={handleChange}
-            required
           />
           <UFInput
             type="text"
             id="uf"
             placeholder="UF"
             value={formData.uf}
-            onChange={handleChange}
             maxLength="2"
-            required
+            onChange={handleChange}
           />
         </InlineGroup>
-        
-        {/* Outros Dados */}
+
+        <Label htmlFor="cep">CEP</Label>
+        <MaskedInput
+          mask="00000-000"
+          id="cep"
+          placeholder="CEP"
+          value={formData.cep}
+          onAccept={handleMaskedInputChange}
+        />
+
         <Label htmlFor="cpf">CPF</Label>
-        <Input
-          type="text"
+        <MaskedInput
+          mask="000.000.000-00"
           id="cpf"
           value={formData.cpf}
-          onChange={handleChange}
+          onAccept={handleMaskedInputChange}
           required
         />
 
@@ -234,23 +378,34 @@ function FuncionarioForm() {
         />
 
         <Label htmlFor="telefone">Telefone</Label>
-        <Input
-          type="tel"
+        <MaskedInput
+          mask={[{ mask: '(00) 0000-0000' }, { mask: '(00) 00000-0000' }]}
           id="telefone"
           value={formData.telefone}
-          onChange={handleChange}
+          onAccept={handleMaskedInputChange}
         />
 
-        <Label htmlFor="cargo">Cargo</Label>
-        <Input
-          type="text"
-          id="cargo"
-          value={formData.cargo}
+        <Label htmlFor="cargo_id">Cargo</Label>
+        <select
+          id="cargo_id"
+          value={formData.cargo_id}
           onChange={handleChange}
           required
-        />
+          style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc', fontSize: '14px', marginBottom: '10px' }}
+        >
+          <option value="">Selecione um cargo</option>
+          {cargos.map((c) => (
+            <option key={c.id} value={c.id}>{c.nome}</option>
+          ))}
+        </select>
 
-        <Button type="submit">Cadastrar</Button>
+        {mensagem && <p style={{ color: mensagem.includes('sucesso') ? 'green' : 'red' }}>{mensagem}</p>}
+
+        <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+          <Button type="submit" disabled={!!funcionarioSelecionadoId}>Cadastrar</Button>
+          <Button type="button" onClick={handleAtualizar} disabled={!funcionarioSelecionadoId}>Atualizar</Button>
+          <Button type="button" onClick={handleExcluir} disabled={!funcionarioSelecionadoId} style={{ backgroundColor: '#dc3545' }}>Excluir</Button>
+        </div>
       </Form>
     </FormContainer>
   );

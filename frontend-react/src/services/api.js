@@ -1,10 +1,9 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:8000/api', // ajuste conforme necessário
+  baseURL: 'http://localhost:8000/api',
   headers: {
     'Content-Type': 'application/json',
-    // você pode colocar tokens aqui futuramente se precisar
   },
 });
 

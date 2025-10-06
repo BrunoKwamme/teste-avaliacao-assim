@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import api from '../../services/api';
 
-// --- Estilização ---
 const Container = styled.div`
   max-width: 800px;
   margin: 40px auto;
@@ -78,7 +77,6 @@ const NoResults = styled.p`
 `;
 
 
-// --- Componente ---
 function FuncionarioRelatorioPage() {
   const [funcionarios, setFuncionarios] = useState([]);
   const [filtroNome, setFiltroNome] = useState('');
@@ -131,24 +129,26 @@ function FuncionarioRelatorioPage() {
       </Form>
 
       {funcionarios.length > 0 ? (
-        <Table>
-          <thead>
-            <tr>
-              <Th>Nome</Th>
-              <Th>Cargo</Th>
-              <Th>Salário</Th>
+      <Table>
+        <thead>
+          <tr>
+            <Th>Nome</Th>
+            <Th>Telefone</Th>
+            <Th>Cargo</Th>
+            <Th>Salário</Th>
+          </tr>
+        </thead>
+        <tbody>
+          {funcionarios.map(func => (
+            <tr key={func.id}>
+              <Td>{func.nome}</Td>
+              <Td>{func.telefone}</Td>
+              <Td>{func.cargo_nome}</Td>
+              <Td>R$ {parseFloat(func.salario).toFixed(2)}</Td>
             </tr>
-          </thead>
-          <tbody>
-            {funcionarios.map(func => (
-              <tr key={func.id}>
-                <Td>{func.nome}</Td>
-                <Td>{func.cargo_nome}</Td>
-                <Td>R$ {parseFloat(func.salario).toFixed(2)}</Td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
+          ))}
+        </tbody>
+      </Table>
       ) : (
         <NoResults>Nenhum funcionário encontrado.</NoResults>
       )}
