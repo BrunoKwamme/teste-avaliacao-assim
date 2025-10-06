@@ -1,162 +1,92 @@
-Avaliação para Desenvolvedor Assim Saúde v2.0 - Sistema de Cadastro e Relatório
-Este projeto implementa um sistema web seguindo a arquitetura MVC para o backend (Laravel) e uma Single Page Application (SPA) para o frontend (React), conforme os requisitos da avaliação.
-
-🛠️ Tecnologias e Ferramentas Utilizadas
-Componente
-
-Tecnologia
-
-Versão
-
-Notas
-
-Backend
-
-PHP
-
-(Informar a versão usada, ex: 8.2)
-
-Linguagem principal do Laravel.
-
-Framework Backend
-
-Laravel
-
-(Informar a versão usada, ex: 10.x)
-
-Implementa a arquitetura MVC (Model, View, Controller).
-
-Banco de Dados
-
-MySQL
-
-(Informar a versão)
-
-Usado para persistência de Cargos e Funcionários.
-
-Servidor Local
-
-XAMPP (Linux)
-
-(Informar a versão)
-
-Oferece Apache e MySQL em um pacote único.
-
-Frontend
-
-React
-
-(Informar a versão, ex: 18)
-
-Utilizado para a interface de usuário (SPA).
-
-Estilização
-
-CSS e/ou Tailwind CSS
-
-
-
-Design simples e responsivo.
-
-💻 Instruções Detalhadas para Rodar o Projeto Localmente
-Para iniciar o projeto, é mandatório que tanto o ambiente backend (Laravel/XAMPP) quanto o frontend (React) estejam rodando simultaneamente.
-
-Pré-requisitos
-XAMPP (Linux): Certifique-se de que os módulos Apache e MySQL estão ativos.
-
-Composer: Gerenciador de dependências do PHP.
-
-Node.js e NPM/Yarn: Para o frontend React.
-
-1. Configuração do Backend (Laravel)
-Assumindo que você está usando o terminal configurado para o PHP do XAMPP (/opt/lampp/bin/php):
-
-Acesse o diretório do backend:
-
-cd backend-laravel
-
-Instale as dependências PHP:
-
-composer install
-
-Configure o arquivo de ambiente:
-Duplique o arquivo .env.example e renomeie a cópia para .env.
-
-Gere a chave da aplicação:
-
-php artisan key:generate
-
-Configure o Banco de Dados:
-Ajuste as seguintes variáveis no seu arquivo .env para o seu banco MySQL local:
-
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=seu_nome_do_banco
-DB_USERNAME=root
-DB_PASSWORD=
-
-Inicie o Servidor da API:
-
-php artisan serve --port=8000
-
-O backend da API estará ativo em: http://127.0.0.1:8000
-
-2. Configuração de CORS (Comunicação entre Front e Back)
-O frontend React (rodando em uma porta diferente) precisa de permissão para acessar o backend. O Laravel já inclui o CORS nativamente.
-
-Verifique o arquivo backend-laravel/config/cors.php e garanta que a URL do seu frontend está listada:
-
-// config/cors.php
-
-'allowed_origins' => ['http://localhost:3000'], // Deve corresponder à porta do React
-
-3. Configuração do Frontend (React)
-Acesse o diretório do frontend:
-
-cd ../frontend-react
-
-Instale as dependências JavaScript:
-
-npm install  # ou yarn install
-
-Inicie o Servidor de Desenvolvimento:
-
-npm start # ou yarn start
-
-O frontend estará ativo em: http://localhost:3000 (ou porta similar).
-
-🗺️ Endpoints da API
-O frontend React deve consumir os seguintes endpoints RESTful (Todos iniciam com http://127.0.0.1:8000/api/):
-
-Funcionalidade
-
-Endpoint
-
-Método HTTP
-
-Descrição
-
-Cadastro Cargo (CRUD)
-
-/api/cargos
-
-GET, POST, PUT, DELETE
-
-Listagem, Inclusão, Alteração e Exclusão de Cargos.
-
-Cadastro Funcionário (CRUD)
-
-/api/funcionarios
-
-GET, POST, PUT, DELETE
-
-Listagem, Inclusão, Alteração e Exclusão de Funcionários. Contém validação de CPF único e válido.
-
-Relatório
-
-/api/relatorio/funcionarios
-
-GET
-
-Lista de funcionários com filtros por nome e/ou cargo, incluindo salário e cargo.
+# 🚀 Avaliação para Desenvolvedor Assim Saúde v2.0
+## Sistema de Cadastro e Relatório
+
+Este projeto implementa um **Sistema Web Completo** seguindo uma arquitetura moderna: **Backend MVC** (Laravel) e **Frontend SPA** (React).
+
+---
+
+## 🛠️ Tecnologias Principais
+
+| Camada | Tecnologia | Versão/Detalhe | Finalidade |
+| :--- | :--- | :--- | :--- |
+| **Backend** | **PHP** | `^8.2` | Linguagem de Programação. |
+| | **Laravel** | `^12.0` | Framework MVC para a API. |
+| | **MySQL** | (via XAMPP) | Banco de Dados. |
+| | **XAMPP** | `8.2.12-0` (Linux) | Servidor Local (Apache e MySQL). |
+| | **Composer** | | Gerenciador de dependências PHP. |
+| **Frontend** | **React** | `19.1.1` | Biblioteca para a Interface (SPA). |
+| | **styled-components** | | Estilização (CSS-in-JS). |
+| | **Axios** | | Conexão e requisições à API. |
+| | **NPM** (ou Yarn) | | Gerenciador de dependências JavaScript. |
+
+---
+
+## ⚙️ Instruções Detalhadas para Rodar o Projeto
+
+**⚠️ ATENÇÃO:** Para o sistema funcionar, o **Backend (Laravel)** e o **Frontend (React)** precisam estar rodando **simultaneamente**.
+
+### Pré-requisitos
+Certifique-se de que você tem instalado e ativo:
+1.  **XAMPP:** Módulos **Apache** e **MySQL** ativos.
+2.  **Composer.**
+3.  **NPM** (ou **Yarn**).
+
+---
+
+### 1. Configuração e Inicialização do Backend (Laravel)
+
+Verifique que você está no diretório raiz do backend.
+
+1.  **Instale as Dependências PHP:**
+    ```bash
+    composer install
+    ```
+2.  **Configure o Ambiente (`.env`):**
+    * Gere a chave da aplicação:
+        ```bash
+        php artisan key:generate
+        ```
+    * Ajuste as variáveis do banco de dados no arquivo `.env` para corresponder ao seu ambiente local:
+        ```ini
+        DB_CONNECTION=mysql
+        DB_HOST=127.0.0.1
+        DB_PORT=3306
+        DB_DATABASE=seu_nome_do_banco  # <-- **MUDE AQUI!**
+        DB_USERNAME=root
+        DB_PASSWORD=
+        ```
+3.  **Inicie o Servidor da API:**
+    ```bash
+    php artisan serve --port=8000
+    ```
+    **➡️ O Backend da API estará ativo em:** `http://127.0.0.1:8000`
+
+---
+
+### 2. Configuração e Inicialização do Frontend (React)
+
+1.  **Acesse o diretório do frontend:**
+    ```bash
+    cd ../frontend-react
+    ```
+2.  **Instale as Dependências JavaScript:**
+    ```bash
+    npm install  # ou yarn install
+    ```
+3.  **Inicie o Servidor de Desenvolvimento:**
+    ```bash
+    npm start # ou yarn start
+    ```
+    **➡️ O Frontend (SPA) estará ativo em:** `http://localhost:3000` (ou porta similar)
+
+---
+
+## 🌐 Endpoints da API (RESTful)
+
+O Frontend React deve consumir a API no endereço base: `http://127.0.0.1:8000/api/`
+
+| Funcionalidade | Endpoint | Método(s) HTTP | Descrição |
+| :--- | :--- | :--- | :--- |
+| **Cadastro Cargo** (CRUD) | `/api/cargos` | `GET, POST, PUT, DELETE` | Gerenciamento completo de Cargos. |
+| **Cadastro Funcionário** (CRUD) | `/api/funcionarios` | `GET, POST, PUT, DELETE` | Gerenciamento de Funcionários. **Validação:** CPF deve ser único. |
+| **Relatório** | `/api/relatorio/funcionarios` | `GET` | Lista de funcionários com filtros opcionais por **Nome** e/ou **Cargo**. Retorna: nome, telefone, salário e cargo. |
