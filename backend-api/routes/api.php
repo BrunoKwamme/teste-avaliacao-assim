@@ -3,6 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CargoController;
 use App\Http\Controllers\FuncionarioController;
+use App\Http\Controllers\RelatorioController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -13,6 +15,13 @@ use App\Http\Controllers\FuncionarioController;
 | O Laravel, por padrão, já inclui o middleware 'api' nessas rotas.
 |
 */
+
+//Rota de teste
+Route::get('ping', function ()
+{
+    return response ()->json(['message' => 'Pong!']);
+});
+
 
 // --- Rotas para Cadastro de Cargos (CRUD e Pesquisa) ---
 // Utiliza Route::apiResource para criar endpoints RESTful completos:
@@ -37,9 +46,4 @@ Route::apiResource('funcionarios', FuncionarioController::class);
 // --- Rotas para Relatório ---
 // Rota GET específica para a página de Relatório (filtros por nome/cargo)
 // Endpoint: /api/relatorio/funcionarios
-Route::get('relatorio/funcionarios', [FuncionarioController::class, 'relatorio']);
-
-Route::get('ping', function ()
-{
-    return response ()->json(['message' => 'Pong!']);
-});
+Route::get('/relatorio/funcionarios', [RelatorioController::class, 'funcionarios']);
